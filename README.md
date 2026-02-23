@@ -2,10 +2,6 @@
 Credit Card Fraud Detection – Research Replication : This project replicates a research paper proposing a DBSCAN-augmented disjunctive ensemble for fraud detection.
 
 
-Here is a clean, professional, and human-toned README file without emojis:
-
----
-
 # Credit Card Fraud Detection using DBSCAN-Augmented Ensemble
 
 Research Paper Replication
@@ -63,7 +59,3 @@ Special emphasis is placed on recall for the fraud class to reduce missed fraudu
 ## Objective
 
 The primary goal of this project is to replicate the proposed research methodology, validate its effectiveness, and analyze the impact of DBSCAN-based feature augmentation combined with ensemble learning for fraud detection.
-
----
-
-If you would like, I can also add sections for installation, usage instructions, or citation of the original research paper.
