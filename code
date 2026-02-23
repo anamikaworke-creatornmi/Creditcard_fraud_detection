@@ -1,0 +1,124 @@
+import pandas as pd
+import numpy as np
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import DBSCAN
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+
+
+df = pd.read_csv("creditcard_2023.csv")
+
+fraud = df[df['Class'] == 1]
+non_fraud = df[df['Class'] == 0]
+
+subset_size = 242400
+fraud_count = int(subset_size * 0.01)
+non_fraud_count = subset_size - fraud_count
+
+fraud_subset = fraud.sample(fraud_count, random_state=42)
+non_fraud_subset = non_fraud.sample(non_fraud_count, random_state=42)
+
+subset1 = pd.concat([
+    non_fraud_subset.sample(40000, random_state=42),
+    fraud_subset.sample(400, random_state=42)
+]).sample(frac=1, random_state=42)
+
+subset2 = pd.concat([
+    non_fraud_subset.sample(80000, random_state=42),
+    fraud_subset.sample(800, random_state=42)
+]).sample(frac=1, random_state=42)
+
+subset3 = pd.concat([
+    non_fraud_subset.sample(120000, random_state=42),
+    fraud_subset.sample(1200, random_state=42)
+]).sample(frac=1, random_state=42)
+
+
+def preprocess_data(df_subset):
+    df_clean = df_subset.dropna()
+    X = df_clean.drop("Class", axis=1)
+    y = df_clean["Class"]
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    return X_scaled, y
+
+
+def dbscan_augmentation(X, eps=2, min_samples=4, iterations=2):
+    X_aug = X.copy()
+
+    for _ in range(iterations):
+        db = DBSCAN(eps=eps, min_samples=min_samples)
+        labels = db.fit_predict(X_aug).reshape(-1, 1)
+        X_aug = np.hstack((X_aug, labels))
+
+    return X_aug
+
+
+def train_and_evaluate(df_subset, name="Dataset"):
+    print(f"\n========== {name} ==========\n")
+
+    X, y = preprocess_data(df_subset)
+    X_aug = dbscan_augmentation(X, eps=2, min_samples=4, iterations=2)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_aug, y, test_size=0.2, random_state=42, stratify=y
+    )
+
+    rf = RandomForestClassifier(n_estimators=3, random_state=42)
+    knn = KNeighborsClassifier(n_neighbors=3)
+    svm = SVC(kernel='rbf', C=1.0)
+
+    rf.fit(X_train, y_train)
+    knn.fit(X_train, y_train)
+    svm.fit(X_train, y_train)
+
+    rf_pred = rf.predict(X_test)
+    knn_pred = knn.predict(X_test)
+    svm_pred = svm.predict(X_test)
+
+    voting_pred = np.array([
+        1 if (rf_pred[i] == 1 or knn_pred[i] == 1 or svm_pred[i] == 1) else 0
+        for i in range(len(y_test))
+    ])
+
+    models_preds = {
+        'Random Forest': rf_pred,
+        'KNN': knn_pred,
+        'SVM': svm_pred,
+        'Voting OR': voting_pred
+    }
+
+    results = {}
+
+    for model_name, y_pred in models_preds.items():
+        acc = accuracy_score(y_test, y_pred)
+        report = classification_report(y_test, y_pred, output_dict=True)
+
+        results[model_name] = {
+            'Accuracy': acc,
+            'Precision_0': report['0']['precision'],
+            'Recall_0': report['0']['recall'],
+            'F1_0': report['0']['f1-score'],
+            'Precision_1': report['1']['precision'],
+            'Recall_1': report['1']['recall'],
+            'F1_1': report['1']['f1-score']
+        }
+
+    df_results = pd.DataFrame(results).T
+    print(df_results)
+
+    print("\nConfusion Matrix for Voting OR:")
+    print(confusion_matrix(y_test, voting_pred))
+
+    return df_results
+
+
+df_results1 = train_and_evaluate(subset1, "Subset 1")
+df_results1 = train_and_evaluate(subset2, "Subset 2")
+df_results1 = train_and_evaluate(subset3, "Subset 3")
