@@ -1,61 +1,120 @@
-# Creditcard_fraud_detection
-Credit Card Fraud Detection – Research Replication : This project replicates a research paper proposing a DBSCAN-augmented disjunctive ensemble for fraud detection.
+# Credit Card Fraud Detection Using Ensemble and Hybrid Models
 
+This repository contains my implementation and evaluation of **machine learning models for credit card fraud detection**.
+The work is based on an ensemble and hybrid approach proposed in a recent research paper, and I test the same idea on the **Kaggle Credit Card Fraud dataset** to see how well it performs on a real, highly imbalanced dataset.
 
-# Credit Card Fraud Detection using DBSCAN-Augmented Ensemble
+The main goal of this project is to compare **individual classifiers** with **ensemble methods**, and to study the effect of combining supervised learning with **DBSCAN-based clustering**.
 
-Research Paper Replication
+---
 
-## Overview
+## Objectives
 
-This project is a replication of a research paper that proposes improving credit card fraud detection using a DBSCAN-augmented disjunctive ensemble model. The objective is to reproduce the methodology described in the paper and evaluate whether combining clustering-based feature augmentation with ensemble voting improves fraud detection performance under imbalanced conditions.
+* Train and evaluate Random Forest, KNN, and SVM models
+* Compare single-model performance with ensemble methods
+* Implement a DBSCAN-based hybrid model
+* Analyze results on multiple imbalanced data subsets
+* Focus on fraud detection performance (fraud as positive class)
+
+---
 
 ## Dataset
 
-The experiments use the Kaggle 2023 Credit Card Fraud dataset (`creditcard_2023.csv`).
-The target variable is defined as:
+The dataset used is the **Credit Card Fraud Detection dataset** from Kaggle.
 
-* 0 – Legitimate transaction
-* 1 – Fraudulent transaction
+* Transactions made by European cardholders
+* Features are anonymized using PCA
+* Class label:
 
-To simulate realistic fraud scenarios, controlled 1% fraud subsets were created with different dataset sizes:
+  * `0` → Non-fraud
+  * `1` → Fraud (positive class)
+* Extremely imbalanced (~0.17% fraud)
 
-* 40,400 records
-* 80,800 records
-* 121,200 records
+Dataset link:
+[https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
 
-Each subset maintains the same fraud ratio to evaluate model behavior across different scales.
+---
 
-## Methodology
+## Data Subsets
 
-1. **Preprocessing**
-   Missing values are removed, and features are standardized using StandardScaler to ensure fair contribution across all variables.
+To follow the experimental setup of the reference paper, the dataset is divided into **three subsets** while keeping the fraud ratio consistent:
 
-2. **DBSCAN Feature Augmentation**
-   Iterative DBSCAN clustering is applied, and the resulting cluster labels are appended as additional features. This step enriches the feature space by incorporating density-based structural information.
+| Subset   | Fraud | Non-Fraud |
+| -------- | ----- | --------- |
+| Subset 1 | 100   | 10,000    |
+| Subset 2 | 200   | 20,000    |
+| Subset 3 | 300   | 30,000    |
 
-3. **Model Training**
-   Three classifiers are trained:
+Each subset is shuffled and split into training and testing sets.
 
-   * Random Forest
-   * K-Nearest Neighbors (KNN)
-   * Support Vector Machine (RBF kernel)
+---
 
-4. **Disjunctive Voting**
-   A transaction is classified as fraud if any of the classifiers predicts fraud. This approach prioritizes maximizing fraud recall.
+## Models Used
 
-## Evaluation
+The following classifiers are implemented:
 
-Model performance is evaluated using:
+* Random Forest (3 trees)
+* K-Nearest Neighbors (k = 3)
+* Support Vector Machine (RBF kernel)
 
-* Accuracy
+Hyperparameters are kept simple to focus on **method comparison rather than tuning**.
+
+---
+
+## Experimental Setup
+
+Two experiments are performed:
+
+### Case Study 1 – Original Data
+
+* Models are trained on the original dataset
+* Predictions are combined using **majority voting**
+* Individual models and ensemble performance are compared
+
+### Case Study 2 – DBSCAN Hybrid Model
+
+* DBSCAN is applied only to the training data
+* Cluster labels are added as an extra feature
+* Test samples are assigned a default cluster label
+* Predictions are combined using **disjunctive (OR) voting**
+
+---
+
+## Evaluation Metrics
+
+All results are reported for the **fraud class (1)**:
+
+* Confusion matrix
 * Precision
 * Recall
 * F1-score
-* Confusion Matrix
 
-Special emphasis is placed on recall for the fraud class to reduce missed fraudulent transactions.
+---
 
-## Objective
+## How to Run
 
-The primary goal of this project is to replicate the proposed research methodology, validate its effectiveness, and analyze the impact of DBSCAN-based feature augmentation combined with ensemble learning for fraud detection.
+1. Install dependencies:
+
+```bash
+pip install numpy pandas scikit-learn
+```
+
+2. Download `creditcard.csv` and place it in the project folder.
+
+3. Run the provided scripts or notebook to generate subsets and evaluate models.
+
+---
+
+## Notes
+
+* No random seed is fixed, so results may vary slightly between runs
+* No resampling techniques (SMOTE, undersampling) are used
+* The focus is on understanding ensemble behavior on imbalanced data
+
+---
+
+## Reference
+
+Hybrid Ensemble Learning for Credit Card Fraud Detection
+Scientific Reports, 2025
+
+---
